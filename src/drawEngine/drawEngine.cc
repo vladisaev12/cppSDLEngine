@@ -2,85 +2,80 @@
 
 #include "drawEngine.hh"
 
-drawEngine::drawEngine()
+DrawEngine::DrawEngine()
 {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "SDL could not initialize! SDL_Error:" << SDL_GetError() << std::endl;
     }
 
-    SDL_GetCurrentDisplayMode(0, &displayMode);
+    SDL_GetCurrentDisplayMode(0, &m_displayMode);
 
-    displayWidth = displayMode.w;
-    displayHeight = displayMode.h;
-    windowWidth = displayWidth / 2;
-    windowHeight = displayHeight / 2;
-    windowPosX = displayWidth / 2 - windowWidth / 2;
-    windowPosY = displayHeight / 2 - windowHeight / 2;
+    m_displayWidth = m_displayMode.w;
+    m_displayHeight = m_displayMode.h;
+    m_windowWidth = m_displayWidth / 2;
+    m_windowHeight = m_displayHeight / 2;
+    m_windowPosX = m_displayWidth / 2 - m_windowWidth / 2;
+    m_windowPosY = m_displayHeight / 2 - m_windowHeight / 2;
 
-    window = SDL_CreateWindow("SDL_Test", windowPosX, windowPosY, windowWidth, windowHeight, SDL_WINDOW_OPENGL);
-    if (window == NULL) {
+    m_window = SDL_CreateWindow("SDL_Test", m_windowPosX, m_windowPosY, m_windowWidth, m_windowHeight, SDL_WINDOW_OPENGL);
+    if (m_window == nullptr) {
         std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
     }
 
-    screenSurface = SDL_GetWindowSurface(window);
+    m_screenSurface = SDL_GetWindowSurface(m_window);
 }
 
-void drawEngine::loop()
+void DrawEngine::loop()
 {
-    // SDL_FillRect(screenSurface, NULL, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0x00));
-    if (drawObjects.size() == 0) {
+    SDL_FillRect(m_screenSurface, nullptr, SDL_MapRGB(m_screenSurface->format, 0x00, 0x00, 0x00));
+    if (m_drawObjects.empty()) {
         return;
     }
-    std::vector<std::string> names;
-    for (int i = 0; i <= drawObjects.size() - 1; i++) {
-        names.push_back(drawObjects[i].name);
-        SDL_Rect* rect = new SDL_Rect;
-        rect->x = drawObjects[i].pos[0];
-        rect->y = drawObjects[i].pos[1];
-        rect->h = drawObjects[i].size[0];
-        rect->w = drawObjects[i].size[1];
-        SDL_FillRect(screenSurface, rect, SDL_MapRGB(screenSurface->format, drawObjects[i].color[0], drawObjects[i].color[1], drawObjects[i].color[2]));
+    for (const auto& [_, currentDrawObject] : m_drawObjects) {
+        SDL_FillRect(
+            m_screenSurface,
+            &currentDrawObject.rect,
+            SDL_MapRGB(
+                m_screenSurface->format,
+                currentDrawObject.color.r,
+                currentDrawObject.color.g,
+                currentDrawObject.color.b));
     }
-    bool names_intersect = false;
-    for (int i = 0; i <= names.size(); i++) {
-        for (int j = i + 1; j < names.size(); j++) {
-            if (names[j] == names[i])
-                names_intersect = true;
-        }
-    }
-    if (names_intersect == true) {
-        std::cout << "Fatal Error: two drawObject names intersect, Exiting now!" << std::endl;
-        delete this;
-    }
-    SDL_UpdateWindowSurface(window);
+    SDL_UpdateWindowSurface(m_window);
 }
 
-void drawEngine::addDrawObject(drawObject object)
+void DrawEngine::addDrawObject(
+    std::string&& name,
+    DrawObject&& object)
 {
-    drawObjects.push_back(object);
+    m_drawObjects.try_emplace(std::move(name), std::move(object));
 }
 
-drawObject drawEngine::makeDrawObject(std::string name, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b)
+void DrawEngine::editDrawObject(
+    std::string&& name,
+    SDL_Rect&& rect)
 {
-    drawObject object;
-    object.name = name;
-    object.pos[0] = x;
-    object.pos[1] = y;
-    object.size[0] = w;
-    object.size[1] = h;
-    object.color[0] = r;
-    object.color[1] = g;
-    object.color[2] = b;
-    return object;
+    m_drawObjects[std::move(name)].rect = std::move(rect);
 }
-
-SDL_Window* drawEngine::getWindow()
+void DrawEngine::editDrawObject(
+    std::string&& name,
+    SDL_Color&& color)
 {
-    return window;
+    m_drawObjects[std::move(name)].color = std::move(color);
 }
 
-drawEngine::~drawEngine()
+bool DrawEngine::isKeyPressed(const SDL_Event& event, const char* key)
+{
+    return event.key.keysym.sym == SDL_GetKeyFromName(key);
+}
+
+SDL_Window* DrawEngine::getWindow()
+{
+    return m_window;
+}
+
+DrawEngine::~DrawEngine()
 {
     SDL_Quit();
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(m_window);
 }

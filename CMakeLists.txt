@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.22.0)
 project(CPP_SFML LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_CURRENT_SOURCE_DIR src)
 
 include(FetchContent)
 
@@ -20,6 +21,8 @@ FetchContent_MakeAvailable(SDL2)
 include_directories(${SDL2_SOURCE_DIR}/include})
 
 # find_package(GTest REQUIRED)
+
+add_executable(${PROJECT_NAME})
 
 include("src/CMakeLists.txt")
 

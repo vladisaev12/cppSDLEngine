@@ -1,45 +1,56 @@
 #include "inputEngine.hh"
 
-inputEngine::inputEngine(SDL_Window* currentWindow)
+#include <iostream>
+
+// WIP
+
+void callback1(const SDL_Event& event)
 {
-    window = currentWindow;
-    // this->addInputCallback(inputCallback("quit", SDL_QUIT, SDL_Quit));
+    SDL_Log(
+        "%s:%d %s",
+        __FUNCTION__,
+        __LINE__,
+        SDL_GetKeyName(event.key.keysym.sym));
 }
 
-inputEngine::~inputEngine()
+InputEngine::InputEngine(SDL_Window* window)
 {
+    m_window = window;
 }
 
-void inputEngine::loop()
+void InputEngine::loop()
 {
-    if (inputCallbacks.size() == 0) {
+    if (m_inputCallbacks.empty()) {
         return;
     }
-    std::vector<std::string> names;
-    for (int i = 0; i <= inputCallbacks.size() - 1; i++) {
-        names.push_back(inputCallbacks[i].name);
+    for (std::size_t i { 0 }; i < m_inputCallbacks.size(); ++i) {
+        SDL_Event e;
         while (SDL_PollEvent(&e)) {
-            for (int i = 0; i <= inputCallbacks.size() - 1; i++) {
-                if (e.type == inputCallbacks[i].event) {
-                    // inputCallbacks[i].callback();
-                }
+            const auto it { m_inputCallbacks.find(e.type) };
+            if (m_inputCallbacks.cend() == it) {
+                continue;
+            }
+            const auto& callbacks { it->second };
+
+            for (const auto& callback : callbacks) {
+                callback(e);
             }
         }
     }
-    bool names_intersect = false;
-    for (int i = 0; i <= names.size(); i++) {
-        for (int j = i + 1; j < names.size(); j++) {
-            if (names[j] == names[i])
-                names_intersect = true;
-        }
-    }
-    if (names_intersect == true) {
-        std::cout << "Fatal Error: two drawObject names intersect, Exiting now!" << std::endl;
-        delete this;
-    }
 }
 
-void addInputCallback(inputCallback object);
+void InputEngine::addInputCallback(
+    Uint32 eventType,
+    const InputCbFuncT& callback)
 {
-    inputCallbacks.push_back(object);
+    const auto it { m_inputCallbacks.find(eventType) };
+    if (m_inputCallbacks.cend() == it) {
+        m_inputCallbacks.try_emplace(
+            eventType,
+            std::vector<InputCbFuncT> { callback });
+        return;
+    }
+    auto& callbacks { it->second };
+
+    callbacks.push_back(callback);
 }

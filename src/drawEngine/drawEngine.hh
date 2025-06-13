@@ -1,34 +1,44 @@
+#pragma once
+
 #include <SDL.h>
-
+#include <map>
 #include <string>
-#include <vector>
 
-struct drawObject {
-    std::string name;
-    int pos[2];
-    int size[2];
-    uint8_t color[3];
+struct DrawObject {
+    SDL_Rect rect;
+    SDL_Color color;
 };
 
-class drawEngine {
-private:
-    int displayWidth;
-    int displayHeight;
-    int windowWidth;
-    int windowHeight;
-    int windowPosX;
-    int windowPosY;
-    std::vector<drawObject> drawObjects;
-
-    SDL_DisplayMode displayMode;
-    SDL_Window* window;
-    SDL_Surface* screenSurface;
-
+class DrawEngine final {
 public:
-    drawEngine();
-    ~drawEngine();
+    DrawEngine();
+    ~DrawEngine();
+
     void loop();
-    void addDrawObject(drawObject object);
-    drawObject makeDrawObject(std::string name, int x, int y, int w, int h, uint8_t r, uint8_t g, uint8_t b);
+    void addDrawObject(
+        std::string&& name,
+        DrawObject&& object);
+    void editDrawObject(
+        std::string&& name,
+        SDL_Rect&& rect);
+    void editDrawObject(
+        std::string&& name,
+        SDL_Color&& color);
+
+    static bool isKeyPressed(const SDL_Event& event, const char* key);
+
     SDL_Window* getWindow();
+
+private:
+    int m_displayWidth;
+    int m_displayHeight;
+    int m_windowWidth;
+    int m_windowHeight;
+    int m_windowPosX;
+    int m_windowPosY;
+    std::map<std::string, DrawObject, std::less<>> m_drawObjects;
+
+    SDL_DisplayMode m_displayMode;
+    SDL_Window* m_window;
+    SDL_Surface* m_screenSurface;
 };

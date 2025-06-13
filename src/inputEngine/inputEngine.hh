@@ -1,24 +1,23 @@
-#include <SDL.h>
+#pragma once
 
-#include <bits/stdc++.h>
+#include <SDL.h>
+#include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
-struct inputCallback {
-    std::string name;
-    Uint32 event;
-    // std::function callback;
-};
-
-class inputEngine {
-private:
-    std::vector<inputCallback> inputCallbacks;
-    SDL_Event e;
-    SDL_Window* window;
-
+class InputEngine final {
 public:
-    inputEngine(SDL_Window* currentWindow);
-    ~inputEngine();
+    using InputCbFuncT = std::function<void(const SDL_Event&)>;
+
+    explicit InputEngine(SDL_Window* currentWindow);
+    ~InputEngine() = default;
     void loop();
-    void addInputCallback(inputCallback object);
+    void addInputCallback(
+        Uint32 eventType,
+        const InputCbFuncT& callback);
+
+private:
+    SDL_Window* m_window;
+    std::map<Uint32, std::vector<InputCbFuncT>> m_inputCallbacks;
 };
